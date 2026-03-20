@@ -3,6 +3,7 @@ name: .NET Core Desktop
 on:
   push:
     branches: [ "master" ]
+    tags: [ "v*" ]
   pull_request:
     branches: [ "master" ]
 
@@ -40,9 +41,19 @@ jobs:
       if: matrix.configuration == 'Release'
       run: dotnet publish HBR.Payment.WatchDog\HBR.Payment.WatchDog.csproj --configuration Release --runtime win-x64 --self-contained false --output publish
 
+    - name: Zip artifact (Release only)
+      if: matrix.configuration == 'Release'
+      run: Compress-Archive -Path publish\* -DestinationPath HBR.Payment.WatchDog.zip
+
     - name: Upload artifact (Release only)
       if: matrix.configuration == 'Release'
       uses: actions/upload-artifact@v4
       with:
         name: HBR.Payment.WatchDog
-        path: publish\
+        path: HBR.Payment.WatchDog.zip
+
+    - name: Create GitHub Release
+      if: matrix.configuration == 'Release' && startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: HBR.Payment.WatchDog.zip
